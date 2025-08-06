@@ -18,17 +18,26 @@ type RegistrationFormFields = {
 
 // Errors type
 type RegistrationErrors = {
-  usernameError?: string;
-  emailError?: string;
-  funFactError?: string;
-  favoriteLanguageError?: string;
-  agreedToTermsError?: string;
+  username?: string;
+  email?: string;
+  funFact?: string;
+  favoriteLanguage?: string;
+  agreedToTerms?: string;
+};
+
+type HasTouchedField = {
+  username: boolean;
+  email: boolean;
+  funFact: boolean;
+  favoriteLanguage: boolean;
+  agreedToTerms: boolean;
 };
 
 // Type for every different element in the form. Just for readability and modification
 type InputElements = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
 export default function RegistrationForm() {
+  // Form State, with defaults
   const [formState, setFormState] = useState<RegistrationFormFields>({
     username: "",
     email: "",
@@ -37,12 +46,31 @@ export default function RegistrationForm() {
     agreedToTerms: false,
   });
 
+  // Error state, with an empty default as all fields are optional
   const [errors, setErrors] = useState<RegistrationErrors>({});
 
+  // Has the user touched this field? For the onBlur effects
+  const [hasTouchedField, setHasTouchedField] = useState<HasTouchedField>({
+    username: false,
+    email: false,
+    funFact: false,
+    favoriteLanguage: false,
+    agreedToTerms: false,
+  });
+
+  // Handle form submit
   const handleSumbit = (e: React.SyntheticEvent) => {
     e.preventDefault();
     // Reset errors
     setErrors({});
+    // We want to say weve touched them all now, so that theres no weird activity
+    setHasTouchedField({
+      username: true,
+      email: true,
+      funFact: true,
+      favoriteLanguage: true,
+      agreedToTerms: true,
+    });
 
     // If there are errors, leave early, do not submit
     const [valid, errors] = validateFields();
@@ -86,11 +114,11 @@ export default function RegistrationForm() {
     return [
       isValid,
       {
-        usernameError,
-        emailError,
-        funFactError,
-        favoriteLanguageError,
-        agreedToTermsError,
+        username: usernameError,
+        email: emailError,
+        funFact: funFactError,
+        favoriteLanguage: favoriteLanguageError,
+        agreedToTerms: agreedToTermsError,
       },
     ];
   };
@@ -123,6 +151,30 @@ export default function RegistrationForm() {
     }
   };
 
+  const handleBlur = (
+    e: React.FocusEvent<InputElements>,
+    validationCallback: (value: string) => string
+  ) => {
+    if (hasTouchedField[e.target.name as keyof HasTouchedField]) {
+      setErrors((prev) => ({
+        ...prev,
+        [e.target.name]: validationCallback(e.target.value),
+      }));
+    }
+  };
+
+  const handleCheckedBlur = (
+    e: React.FocusEvent<HTMLInputElement>,
+    validationCallback: (value: boolean) => string
+  ) => {
+    if (hasTouchedField[e.target.name as keyof HasTouchedField]) {
+      setErrors((prev) => ({
+        ...prev,
+        [e.target.name]: validationCallback(e.target.checked),
+      }));
+    }
+  };
+
   return (
     <div>
       <form onSubmit={handleSumbit}>
@@ -133,11 +185,13 @@ export default function RegistrationForm() {
             name="username"
             value={formState.username}
             onChange={handleInputChange}
+            onFocus={(e) =>
+              setHasTouchedField((prev) => ({ ...prev, [e.target.name]: true }))
+            }
+            onBlur={(e) => handleBlur(e, validateUserName)}
           />
         </label>
-        {errors.usernameError && (
-          <p className="alert">{errors.usernameError}</p>
-        )}
+        {errors.username && <p className="alert">{errors.username}</p>}
         <label>
           Email:
           <input
@@ -145,24 +199,36 @@ export default function RegistrationForm() {
             name="email"
             value={formState.email}
             onChange={handleInputChange}
+            onFocus={(e) =>
+              setHasTouchedField((prev) => ({ ...prev, [e.target.name]: true }))
+            }
+            onBlur={(e) => handleBlur(e, validateEmail)}
           />
         </label>
-        {errors.emailError && <p className="alert">{errors.emailError}</p>}
+        {errors.email && <p className="alert">{errors.email}</p>}
         <label>
           Fun Fact About You:
           <textarea
             name="funFact"
             value={formState.funFact}
             onChange={handleInputChange}
+            onFocus={(e) =>
+              setHasTouchedField((prev) => ({ ...prev, [e.target.name]: true }))
+            }
+            onBlur={(e) => handleBlur(e, validateFunFact)}
           ></textarea>
         </label>
-        {errors.funFactError && <p className="alert">{errors.funFactError}</p>}
+        {errors.funFact && <p className="alert">{errors.funFact}</p>}
         <label>
           Language:
           <select
             name="favoriteLanguage"
             value={formState.favoriteLanguage}
+            onFocus={(e) =>
+              setHasTouchedField((prev) => ({ ...prev, [e.target.name]: true }))
+            }
             onChange={handleInputChange}
+            onBlur={(e) => handleBlur(e, validateFavoriteLanguage)}
           >
             <option value="None">-- Please select a language --</option>
             <option value="HTML">HTML</option>
@@ -173,8 +239,8 @@ export default function RegistrationForm() {
             <option value="Python">Python</option>
           </select>
         </label>
-        {errors.favoriteLanguageError && (
-          <p className="alert">{errors.favoriteLanguageError}</p>
+        {errors.favoriteLanguage && (
+          <p className="alert">{errors.favoriteLanguage}</p>
         )}
         <label>
           <input
@@ -182,11 +248,15 @@ export default function RegistrationForm() {
             name="agreedToTerms"
             checked={formState.agreedToTerms}
             onChange={handleInputChange}
+            onFocus={(e) =>
+              setHasTouchedField((prev) => ({ ...prev, [e.target.name]: true }))
+            }
+            onBlur={(e) => handleCheckedBlur(e, validateAgreedToTerms)}
           />
           I Agree to the Terms and Conditions
         </label>
-        {errors.agreedToTermsError && (
-          <p className="alert">{errors.agreedToTermsError}</p>
+        {errors.agreedToTerms && (
+          <p className="alert">{errors.agreedToTerms}</p>
         )}
         <button type="submit">Submit</button>
       </form>
