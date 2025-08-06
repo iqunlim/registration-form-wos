@@ -25,6 +25,7 @@ type RegistrationErrors = {
   agreedToTerms?: string;
 };
 
+// Has Touched type: For Blur effects
 type HasTouchedField = {
   username: boolean;
   email: boolean;
@@ -79,7 +80,6 @@ export default function RegistrationForm() {
       return;
     }
     // In the real world, this would be some sort of POST request or otherwise
-    // There is a small bug, where the last error still shows up. Lets fix that
     alert(
       `Submitted Username: ${formState.username}\nSubmitted Email: ${
         formState.email
@@ -90,8 +90,9 @@ export default function RegistrationForm() {
   };
 
   const validateFields = (): [boolean, RegistrationErrors] => {
-    // Username validation
+    // Checking if we ran in to any errors
     let isValid = true;
+    // Run validators
     const usernameError = validateUserName(formState.username);
     const emailError = validateEmail(formState.email);
     const funFactError = validateFunFact(formState.funFact);
@@ -175,6 +176,7 @@ export default function RegistrationForm() {
     }
   };
 
+  // TODO: Break input elements in to their own component
   return (
     <div>
       <form onSubmit={handleSumbit}>
@@ -207,7 +209,7 @@ export default function RegistrationForm() {
         </label>
         {errors.email && <p className="alert">{errors.email}</p>}
         <label>
-          Fun Fact About You:
+          <span>Fun Fact About You: ({100 - formState.funFact.length})</span>
           <textarea
             name="funFact"
             value={formState.funFact}
@@ -243,6 +245,7 @@ export default function RegistrationForm() {
           <p className="alert">{errors.favoriteLanguage}</p>
         )}
         <label>
+          <p></p>
           <input
             type="checkbox"
             name="agreedToTerms"
