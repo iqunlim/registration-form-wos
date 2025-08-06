@@ -9,6 +9,15 @@ type RegistrationFormFields = {
   agreedToTerms: boolean;
 };
 
+// Errors type
+type RegistrationErrors = {
+  usernameError?: string;
+  emailError?: string;
+  funFactError?: string;
+  favoriteLanguageError?: string;
+  agreedToTermsError?: string;
+};
+
 // Type for every different element in the form. Just for readability and modification
 type InputElements = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
@@ -21,8 +30,21 @@ export default function RegistrationForm() {
     agreedToTerms: false,
   });
 
+  const [errors, setErrors] = useState<RegistrationErrors>({});
+
   const handleSumbit = (e: React.SyntheticEvent) => {
     e.preventDefault();
+    // Reset errors
+    setErrors({});
+
+    // If there are errors, leave early, do not submit
+    const [valid, errors] = validateFields();
+    if (!valid) {
+      setErrors(errors);
+      return;
+    }
+    // In the real world, this would be some sort of POST request or otherwise
+    // There is a small bug, where the last error still shows up. Lets fix that
     alert(
       `Submitted Username: ${formState.username}\nSubmitted Email: ${
         formState.email
@@ -30,6 +52,47 @@ export default function RegistrationForm() {
         formState.favoriteLanguage
       }\nAgreed to terms? ${formState.agreedToTerms ? "Yes" : "No"}`
     );
+  };
+
+  const validateFields = (): [boolean, RegistrationErrors] => {
+    // Username validation
+    let isValid = true;
+    const errors: RegistrationErrors = {};
+    if (!formState.username) {
+      errors.usernameError = "Username is Required";
+      isValid = false;
+    } else if (formState.username.length < 3) {
+      errors.usernameError = "Username must be at least 3 characters.";
+      isValid = false;
+    }
+    // Email validation
+    if (!formState.email) {
+      errors.emailError = "Email is required";
+      isValid = false;
+    } else if (!formState.email.includes("@")) {
+      errors.emailError = "Please enter a valid email address.";
+      isValid = false;
+    }
+    // Have they agreed to the terms?
+    if (!formState.agreedToTerms) {
+      errors.agreedToTermsError =
+        "You must agreed to the terms and conditions.";
+      isValid = false;
+    }
+
+    // TextArea validation
+    if (formState.funFact.length < 5 || formState.funFact.length > 100) {
+      errors.funFactError =
+        "Please enter a fun fact between 5 and 100 characters";
+      isValid = false;
+    }
+
+    // Favorite Language validation
+    if (formState.favoriteLanguage === "None") {
+      errors.favoriteLanguageError = "Please select a language.";
+      isValid = false;
+    }
+    return [isValid, errors];
   };
 
   const handleInputChange: React.ChangeEventHandler<InputElements> = (e) => {
@@ -56,7 +119,7 @@ export default function RegistrationForm() {
         break;
       // Fall-through to throw a TypeError for the developer
       default:
-        throw new TypeError("Invalid HTML Input Element");
+        throw new TypeError("Invalid HTML Form Element");
     }
   };
 
@@ -70,28 +133,30 @@ export default function RegistrationForm() {
             name="username"
             value={formState.username}
             onChange={handleInputChange}
-            required
           />
         </label>
+        {errors.usernameError && (
+          <p className="alert">{errors.usernameError}</p>
+        )}
         <label>
           Email:
           <input
-            type="email"
+            type="text"
             name="email"
             value={formState.email}
             onChange={handleInputChange}
-            required
           />
         </label>
+        {errors.emailError && <p className="alert">{errors.emailError}</p>}
         <label>
           Fun Fact About You:
           <textarea
             name="funFact"
             value={formState.funFact}
             onChange={handleInputChange}
-            required
           ></textarea>
         </label>
+        {errors.funFactError && <p className="alert">{errors.funFactError}</p>}
         <label>
           Language:
           <select
@@ -108,6 +173,9 @@ export default function RegistrationForm() {
             <option value="Python">Python</option>
           </select>
         </label>
+        {errors.favoriteLanguageError && (
+          <p className="alert">{errors.favoriteLanguageError}</p>
+        )}
         <label>
           <input
             type="checkbox"
@@ -117,6 +185,9 @@ export default function RegistrationForm() {
           />
           I Agree to the Terms and Conditions
         </label>
+        {errors.agreedToTermsError && (
+          <p className="alert">{errors.agreedToTermsError}</p>
+        )}
         <button type="submit">Submit</button>
       </form>
       <div>
