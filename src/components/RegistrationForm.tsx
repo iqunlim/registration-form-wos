@@ -1,4 +1,11 @@
 import { useState } from "react";
+import {
+  validateAgreedToTerms,
+  validateEmail,
+  validateFavoriteLanguage,
+  validateFunFact,
+  validateUserName,
+} from "../validators";
 
 // Form type
 type RegistrationFormFields = {
@@ -57,42 +64,35 @@ export default function RegistrationForm() {
   const validateFields = (): [boolean, RegistrationErrors] => {
     // Username validation
     let isValid = true;
-    const errors: RegistrationErrors = {};
-    if (!formState.username) {
-      errors.usernameError = "Username is Required";
-      isValid = false;
-    } else if (formState.username.length < 3) {
-      errors.usernameError = "Username must be at least 3 characters.";
-      isValid = false;
-    }
-    // Email validation
-    if (!formState.email) {
-      errors.emailError = "Email is required";
-      isValid = false;
-    } else if (!formState.email.includes("@")) {
-      errors.emailError = "Please enter a valid email address.";
-      isValid = false;
-    }
-    // Have they agreed to the terms?
-    if (!formState.agreedToTerms) {
-      errors.agreedToTermsError =
-        "You must agreed to the terms and conditions.";
+    const usernameError = validateUserName(formState.username);
+    const emailError = validateEmail(formState.email);
+    const funFactError = validateFunFact(formState.funFact);
+    const favoriteLanguageError = validateFavoriteLanguage(
+      formState.favoriteLanguage
+    );
+    const agreedToTermsError = validateAgreedToTerms(formState.agreedToTerms);
+    // Are any of these more than just ""?
+    if (
+      usernameError ||
+      emailError ||
+      funFactError ||
+      favoriteLanguageError ||
+      agreedToTermsError
+    ) {
+      // If so, this isnt valid, return false
       isValid = false;
     }
-
-    // TextArea validation
-    if (formState.funFact.length < 5 || formState.funFact.length > 100) {
-      errors.funFactError =
-        "Please enter a fun fact between 5 and 100 characters";
-      isValid = false;
-    }
-
-    // Favorite Language validation
-    if (formState.favoriteLanguage === "None") {
-      errors.favoriteLanguageError = "Please select a language.";
-      isValid = false;
-    }
-    return [isValid, errors];
+    // Return that error object, and then if we ran in to an error or not
+    return [
+      isValid,
+      {
+        usernameError,
+        emailError,
+        funFactError,
+        favoriteLanguageError,
+        agreedToTermsError,
+      },
+    ];
   };
 
   const handleInputChange: React.ChangeEventHandler<InputElements> = (e) => {
